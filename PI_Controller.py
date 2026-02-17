@@ -16,6 +16,11 @@ YAW_BIAS_RATE = 0.00817  # deg/s (measured)
 def clamp(val, min_val, max_val):
     return max(min(val, max_val), min_val)
 
+def normalize_angle(a):
+    while a > 180: a -= 360
+    while a < -180: a += 360
+    return a
+
 # ---------------------------
 # PI Controller (speed-based)
 # ---------------------------
