@@ -59,6 +59,69 @@ class PIController:
 
         return self.kp * error + self.ki * self.integral
 
+def drive_distance_cm(target_cm): ## 1ft ~ 30.5cm
+    imu.reset_yaw()
+    drivetrain.reset_encoder_position()
+
+    driveController = PIController(kp=0.1, ki=0.01, dt=dt)
+    headingController = PIController(kp=0.03, ki=0.01, dt=dt)
+
+    target_heading = 0
+    errorList = []
+    distList = []
+
+    while rangefinder.distance()>10:
+        ticks = (drivetrain.get_left_encoder_position() +
+         drivetrain.get_right_encoder_position()) / 2
+        distance = (ticks / TICKS_PER_REV) * WHEEL_CIRCUMFERENCE
+        error = target_cm - distance
+
+        errorList.append(error)
+        distList.append(distance)
+
+        if len(errorList) > 5:
+            errorList.pop(0)
+            distList.pop(0)
+            
+        avgError = sum(errorList) / len(errorList)
+        
+        if len(distList) >= 3:
+            v1 = distList[-1] - distList[-2]
+            v2 = distList[-2] - distList[-3]
+            velocity = (v1 + v2) / 2
+        else:
+            velocity = 0
+        
+
+        forward = driveController.update(target_cm, distance)
+        forward = clamp(forward, -0.8, 0.8)
+        if abs(error) < 1.5 and abs(forward) < 0.05:
+            break
+        if abs(forward) > 0 and abs(forward) < 0.2:
+            forward = 0.2 if forward > 0 else -0.2
+
+        current_yaw = imu.get_yaw()
+        turn = headingController.update(target_heading, current_yaw)
+        
+        max_turn = 0.4 * abs(forward)
+        turn = clamp(turn, -max_turn, max_turn)
+
+        left = forward - turn
+        right = forward + turn
+
+        left = clamp(left, -1.0, 1.0)
+        right = clamp(right, -1.0, 1.0)
+
+        drivetrain.set_effort(left, right)
+
+        print("Dist:", round(distance, 2),
+              "Err:", round(error, 2),
+              "Vel:", round(velocity, 3))
+        print(drivetrain.get_left_encoder_position())
+        time.sleep(dt)
+
+    drivetrain.stop()
+
 def turn_to_heading(target_deg):
     imu.reset_yaw()
 
@@ -93,34 +156,6 @@ def turn_to_heading(target_deg):
         if abs(error) < 2 and abs(derivative) < 5:
             break
 
-        time.sleep(dt)
-
-    drivetrain.stop()
-
-def turn_to_heading(target_deg):
-    imu.reset_yaw()
-    turnController = PIController(kp=0.05, ki=0.01, dt=dt)
-    errorList = []
-
-    while True:
-        current = imu.get_yaw()
-        error = normalize_angle(target_deg - current)
-        errorList.append(error)
-
-        if len(errorList) > 0:
-            avgError = sum(errorList) / len(errorList)
-        else:
-            avgError = 0
-
-        if abs(avgError) < 2 and abs(output) < 0.1:
-            break
-
-        print("avgError:", avgError)
-
-        output = turnController.update(target_deg, current)
-        output = clamp(output, -0.4, 0.4)
-
-        drivetrain.set_effort(-output, output)
         time.sleep(dt)
 
     drivetrain.stop()
