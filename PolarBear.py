@@ -127,13 +127,14 @@ def turn_to_heading(target_deg):
 
     kp = 0.025
     ki = 0.0
-    kd = 0.012
+    kd = 0.008 #0.012
 
     integral = 0.0
     prev_error = 0.0
 
     MIN_TURN = 0.25   # your old deadzone (good value)
     MAX_TURN = 0.4
+    STOP_ANGLE = 2.5
 
     while True:
         current = imu.get_yaw()
@@ -152,10 +153,8 @@ def turn_to_heading(target_deg):
         output = clamp(output, -MAX_TURN, MAX_TURN)
 
         # ✅ SMART minimum output (ONLY when close)
-        if abs(error) < 15:
-            scaled_min = MIN_TURN * (abs(error) / 15.0)
-            if 0 < abs(output) < scaled_min:
-                output = scaled_min if output > 0 else -scaled_min
+        if abs(output) < MIN_TURN and abs(error) > STOP_ANGLE:
+            output = MIN_TURN if output > 0 else -MIN_TURN
 
         drivetrain.set_effort(-output, output)
 
