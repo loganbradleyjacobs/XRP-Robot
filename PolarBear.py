@@ -132,7 +132,7 @@ def turn_to_heading(target_deg):
     integral = 0.0
     prev_error = 0.0
 
-    MIN_TURN = 0.18   # your old deadzone (good value)
+    MIN_TURN = 0.25   # your old deadzone (good value)
     MAX_TURN = 0.4
 
     while True:
