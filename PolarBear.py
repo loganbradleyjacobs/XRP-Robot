@@ -153,15 +153,16 @@ def turn_to_heading(target_deg):
 
         # ✅ SMART minimum output (ONLY when close)
         if abs(error) < 15:
-            if 0 < abs(output) < MIN_TURN:
-                output = MIN_TURN if output > 0 else -MIN_TURN
+            scaled_min = MIN_TURN * (abs(error) / 15.0)
+            if 0 < abs(output) < scaled_min:
+                output = scaled_min if output > 0 else -scaled_min
 
         drivetrain.set_effort(-output, output)
 
         print("error:", round(error, 2), "output:", round(output, 3))
 
         # ✅ Better exit condition
-        if abs(error) < 2 and abs(derivative) < 3:
+        if abs(error) < 2 and abs(derivative) < 2:
             break
 
         time.sleep(dt)
