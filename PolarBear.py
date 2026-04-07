@@ -125,19 +125,21 @@ def drive_distance_cm(target_cm): ## 1ft ~ 30.5cm
 def turn_to_heading(target_deg):
     imu.reset_yaw()
 
-    # Tuned starting values
-    kp = 0.02
+    kp = 0.025
     ki = 0.0
-    kd = 0.01
+    kd = 0.012
 
     integral = 0.0
     prev_error = 0.0
+
+    MIN_TURN = 0.18   # your old deadzone (good value)
+    MAX_TURN = 0.4
 
     while True:
         current = imu.get_yaw()
         error = normalize_angle(target_deg - current)
 
-        # --- PID terms ---
+        # PID
         integral += error * dt
         integral = clamp(integral, -1.0, 1.0)
 
@@ -145,15 +147,21 @@ def turn_to_heading(target_deg):
         prev_error = error
 
         output = kp * error + ki * integral + kd * derivative
-        output = clamp(output, -0.4, 0.4)
 
-        # --- Apply turn ---
+        # Clamp max
+        output = clamp(output, -MAX_TURN, MAX_TURN)
+
+        # ✅ SMART minimum output (ONLY when close)
+        if abs(error) < 15:
+            if 0 < abs(output) < MIN_TURN:
+                output = MIN_TURN if output > 0 else -MIN_TURN
+
         drivetrain.set_effort(-output, output)
 
         print("error:", round(error, 2), "output:", round(output, 3))
 
-        # --- Exit condition (tight + stable) ---
-        if abs(error) < 2 and abs(derivative) < 5:
+        # ✅ Better exit condition
+        if abs(error) < 2 and abs(derivative) < 3:
             break
 
         time.sleep(dt)
