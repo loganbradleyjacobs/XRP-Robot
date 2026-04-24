@@ -16,7 +16,22 @@ WHEEL_CIRCUMFERENCE = 21.0
 TICKS_PER_REV = 24
 ##INACCURATE BUT SOMEWHAT TRANSLATES TO REAL DISTANCE
 
-# Utilities
+# ── Logging ──────────────────────────────────────────────────────────────────
+LOG_FILE = "run_log.txt"
+
+def log_open():
+    """Call once at startup to create/clear the log file."""
+    with open(LOG_FILE, "w") as f:
+        f.write("=== RUN START: {} ms ===\n".format(time.ticks_ms()))
+
+def log(msg):
+    """Write a timestamped line to the log file and also print it."""
+    line = "[{}] {}\n".format(time.ticks_ms(), msg)
+    print(line, end="")
+    with open(LOG_FILE, "a") as f:
+        f.write(line)
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
 def clamp(val, min_val, max_val):
     return max(min(val, max_val), min_val)
 
@@ -55,7 +70,7 @@ class PIController:
         return self.kp * error + self.ki * self.integral
 
 def go(target_cm): ## 1ft ~ 30.5cm
-    print("go")
+    log("go: target={} cm".format(target_cm))
     imu.reset_yaw()
     drivetrain.reset_encoder_position()
 
@@ -68,7 +83,6 @@ def go(target_cm): ## 1ft ~ 30.5cm
 
     while True:
         if (rangefinder.distance() > 40):
-            print("driving normally")
             ticks = (drivetrain.get_left_encoder_position() +
              drivetrain.get_right_encoder_position()) / 2
             distance = (ticks / TICKS_PER_REV) * WHEEL_CIRCUMFERENCE
@@ -93,14 +107,13 @@ def go(target_cm): ## 1ft ~ 30.5cm
             forward = driveController.update(target_cm, distance)
             forward = clamp(forward, -0.8, 0.8)
             if abs(error) < 1.5 and abs(forward) < 0.05:
+                log("go: target reached at distance={:.1f} cm".format(distance))
                 break
             if abs(forward) > 0 and abs(forward) < 0.2:
                 forward = 0.2 if forward > 0 else -0.2
     
             current_yaw = imu.get_yaw()
             turn = headingController.update(target_heading, current_yaw)
-            
-            #max_turn = 0.4 * abs(forward)
             turn = clamp(turn, -0.2, 0.2)
     
             left = forward - turn
@@ -112,8 +125,13 @@ def go(target_cm): ## 1ft ~ 30.5cm
             drivetrain.set_effort(left, right)
     
             time.sleep(dt)
-        else: 
-            print("Diverting")
+        else:
+            log("go: obstacle detected at {:.1f} cm, distance traveled={:.1f} cm".format(
+                rangefinder.distance(),
+                (((drivetrain.get_left_encoder_position() +
+                   drivetrain.get_right_encoder_position()) / 2)
+                 / TICKS_PER_REV) * WHEEL_CIRCUMFERENCE
+            ))
 
             drivetrain.stop()
 
@@ -126,6 +144,7 @@ def go(target_cm): ## 1ft ~ 30.5cm
             headingController.integral = 0.0
 
             target_cm -= avoided
+            log("go: resuming, adjusted target={:.1f} cm".format(target_cm))
             continue
 
     drivetrain.stop()
@@ -133,8 +152,8 @@ def go(target_cm): ## 1ft ~ 30.5cm
 
 def around() -> float:
     """
-    Peeks left 45. If clear, goes around left.
-    If blocked, turns 90 right (from the +45 peek position, net -45 from forward)
+    Peeks left 45°. If clear, goes around left.
+    If blocked, turns 90° right (from the +45 peek position, net -45 from forward)
     and goes around right. Either way the robot is already facing the correct
     diagonal when avoidance begins — no extra turn needed.
 
@@ -145,58 +164,58 @@ def around() -> float:
     """
     dist = 50
 
-    print("around - peeking left")
+    log("around: peeking left")
     drivetrain.stop()
 
-    # Peek left: turn to +45 from current forward
     imu.reset_yaw()
     turn(45)
-    time.sleep(0.1)  # let rangefinder settle
+    time.sleep(0.1)
     left_dist = rangefinder.distance()
-    print("left peek distance:", left_dist)
+    log("around: left peek distance={:.1f} cm".format(left_dist))
 
     if left_dist > 40:
-        # Left is clear — already facing +45, go around left
-        print("going around left")
+        log("around: left clear, going around left")
 
         simple_forward(dist)
-        print("went", dist, "cm")
+        log("around: leg 1 done")
 
         turn(-90)
-        print("turned right 90")
+        log("around: turned right 90")
 
         simple_forward(dist)
-        print("went", dist, "cm")
+        log("around: leg 2 done")
 
         turn(45)
-        print("turned left 45 - back to original heading")
+        log("around: back to original heading (left path complete)")
 
     else:
-        # Left is blocked — turn 90 right from here to land at -45 from forward
-        print("left blocked, turning right to check and go right")
+        log("around: left blocked, turning right 90 to face -45")
         turn(-90)
-        print("now facing -45 from original forward")
+        log("around: now facing -45 from original forward")
 
         simple_forward(dist)
-        print("went", dist, "cm")
+        log("around: leg 1 done")
 
         turn(90)
-        print("turned left 90")
+        log("around: turned left 90")
 
         simple_forward(dist)
-        print("went", dist, "cm")
+        log("around: leg 2 done")
 
         turn(-45)
-        print("turned right 45 - back to original heading")
+        log("around: back to original heading (right path complete)")
 
-    return math.sqrt(dist**2 + dist**2)
+    avoided = math.sqrt(dist**2 + dist**2)
+    log("around: complete, avoided={:.1f} cm".format(avoided))
+    return avoided
 
 
 def simple_forward(distance_cm):
     drivetrain.reset_encoder_position()
-    imu.reset_yaw()  # hold whatever heading we just turned to
+    imu.reset_yaw()
 
     headingController = PIController(kp=0.03, ki=0.01, dt=dt)
+    log("simple_forward: target={} cm".format(distance_cm))
 
     while True:
         ticks = (drivetrain.get_left_encoder_position() +
@@ -204,6 +223,7 @@ def simple_forward(distance_cm):
         distance = (ticks / TICKS_PER_REV) * WHEEL_CIRCUMFERENCE
 
         if distance >= distance_cm:
+            log("simple_forward: done at {:.1f} cm".format(distance))
             break
 
         current_yaw = imu.get_yaw()
@@ -219,16 +239,16 @@ def simple_forward(distance_cm):
     drivetrain.stop()
 
 
-def turn(target_deg, smooth=False):
+def turn(target_deg, smooth=False, timeout_s=3.0):
     """
     PID turn to target_deg.
-    If smooth=True, once within BLEND_THRESHOLD degrees of the target,
-    the robot begins blending in forward motion so the stop-start
-    between turn() and simple_forward() is replaced by a gentle arc.
-    The forward creep scales linearly from 0 -> CREEP_SPEED as the
-    heading error closes, so the robot is already moving when it exits.
+    timeout_s: max seconds to attempt the turn before giving up.
+               Logs a warning and stops if exceeded.
+    smooth: blends in forward creep during the final degrees of the turn.
     """
     imu.reset_yaw()
+    start_ms = time.ticks_ms()
+    log("turn: target={} deg, timeout={} s".format(target_deg, timeout_s))
 
     kp = 0.025
     ki = 0.0
@@ -241,10 +261,19 @@ def turn(target_deg, smooth=False):
     MAX_TURN = 0.3
     STOP_ANGLE = 2.5
 
-    BLEND_THRESHOLD = 20.0  # degrees: when to start blending forward
-    CREEP_SPEED = 0.15      # max forward effort during blend phase
+    BLEND_THRESHOLD = 20.0
+    CREEP_SPEED = 0.15
 
     while True:
+        # ── Timeout check ────────────────────────────────────────────────────
+        elapsed_s = time.ticks_diff(time.ticks_ms(), start_ms) / 1000.0
+        if elapsed_s >= timeout_s:
+            current = imu.get_yaw()
+            log("turn: TIMEOUT after {:.2f} s — target={} deg, current={:.1f} deg, error={:.1f} deg".format(
+                elapsed_s, target_deg, current, normalize_angle(target_deg - current)
+            ))
+            break
+
         current = imu.get_yaw()
         error = normalize_angle(target_deg - current)
 
@@ -261,12 +290,10 @@ def turn(target_deg, smooth=False):
         if abs(output) < MIN_TURN and abs(error) > STOP_ANGLE:
             output = MIN_TURN if output > 0 else -MIN_TURN
 
-        # Smooth blend: linearly ramp in forward creep as error shrinks
         if smooth and abs(error) < BLEND_THRESHOLD:
-            # t goes 1.0 (at threshold) -> 0.0 (at STOP_ANGLE)
             t = (abs(error) - STOP_ANGLE) / (BLEND_THRESHOLD - STOP_ANGLE)
             t = clamp(t, 0.0, 1.0)
-            creep = CREEP_SPEED * (1.0 - t)  # ramps UP as error shrinks
+            creep = CREEP_SPEED * (1.0 - t)
             left  = clamp(creep - output, -1.0, 1.0)
             right = clamp(creep + output, -1.0, 1.0)
         else:
@@ -275,21 +302,30 @@ def turn(target_deg, smooth=False):
 
         drivetrain.set_effort(left, right)
 
-        print("error:", round(error, 2), "output:", round(output, 3))
+        # Log every ~10 cycles (~0.5 s) to keep file size manageable
+        if int(elapsed_s / dt) % 10 == 0:
+            log("turn: t={:.2f} s  yaw={:.1f}  error={:.1f}  output={:.3f}".format(
+                elapsed_s, current, error, output
+            ))
 
         if abs(error) < STOP_ANGLE:
+            log("turn: complete — target={} deg, final yaw={:.1f} deg, time={:.2f} s".format(
+                target_deg, current, elapsed_s
+            ))
             break
 
         time.sleep(dt)
 
-    # No hard stop when smoothing — simple_forward takes over immediately
     if not smooth:
         drivetrain.stop()
     imu.reset_yaw()
 
 
 def main():
+    log_open()
+    log("main: starting")
     go(152)
+    log("main: done")
 
 if __name__ == "__main__":
     main()
