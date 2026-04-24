@@ -131,20 +131,70 @@ def go(target_cm): ## 1ft ~ 30.5cm
     drivetrain.stop()
 
 
+def peek_turn(target_deg):
+    """
+    A minimal PID turn that does NOT call imu.reset_yaw() at the start.
+    Turns to target_deg relative to the CURRENT imu zero.
+    Used by check_left_clear() so both the peek and the return-to-zero
+    share the same IMU reference frame, avoiding the double-reset bug.
+    Does reset yaw at the end to leave things clean.
+    """
+    kp = 0.025
+    ki = 0.0
+    kd = 0.008
+
+    integral = 0.0
+    prev_error = 0.0
+
+    MIN_TURN = 0.25
+    MAX_TURN = 0.3
+    STOP_ANGLE = 2.5
+
+    while True:
+        current = imu.get_yaw()
+        error = normalize_angle(target_deg - current)
+
+        integral += error * dt
+        integral = clamp(integral, -1.0, 1.0)
+
+        derivative = (error - prev_error) / dt
+        prev_error = error
+
+        output = kp * error + ki * integral + kd * derivative
+        output = clamp(output, -MAX_TURN, MAX_TURN)
+
+        if abs(output) < MIN_TURN and abs(error) > STOP_ANGLE:
+            output = MIN_TURN if output > 0 else -MIN_TURN
+
+        drivetrain.set_effort(-output, output)
+
+        if abs(error) < STOP_ANGLE:
+            break
+
+        time.sleep(dt)
+
+    drivetrain.stop()
+
+
 def check_left_clear():
     """
-    Peek 45 degrees left and check if the path is clear.
-    Returns True if clear, False if blocked.
-    Resets yaw and returns to original heading afterward.
+    Peeks 45 degrees left using a shared IMU frame (no reset between turns),
+    reads the rangefinder, then returns to 0 degrees.
+    Returns True if the left path is clear, False if blocked.
     """
-    CLEAR_THRESHOLD = 40  # cm, same threshold used in go()
+    CLEAR_THRESHOLD = 40  # cm
 
-    turn(45)  # turn left 45
-    time.sleep(0.1)  # brief pause for rangefinder to settle
+    imu.reset_yaw()           # establish shared zero for both peek turns
+
+    peek_turn(45)             # turn left 45 relative to that zero
+    time.sleep(0.1)           # let rangefinder settle
     dist = rangefinder.distance()
     print("left peek distance:", dist)
     clear = dist > CLEAR_THRESHOLD
-    turn(-45)  # return to original heading
+
+    peek_turn(0)              # return to zero in the same IMU frame
+    drivetrain.stop()
+    imu.reset_yaw()           # clean up for whoever calls next
 
     return clear
 
@@ -157,8 +207,6 @@ def around() -> float:
       Right: -45, forward, +90, forward, -45
     Net lateral displacement = 0. Forward progress = dist * sqrt(2).
     """
-    imu.reset_yaw()
-
     dist = 50
 
     print("around")
