@@ -6,7 +6,6 @@ import math
 dt = 0.05
 MAX_EFFORT = 0.3 ## MAX IS 1.0
 MIN_EFFORT = -MAX_EFFORT ## INVERSE OF MAX, CHANGE FOR SPECIFIC CONTROL IN TURNING 
-
 deadzone = 0.18 ## CHANGE ACCORDING TO WEIGHT!!! DEFAULT IS 0.18 FOR NAKED BOT
 
 YAW_BIAS = 0.00817 ## DERIVED FROM MEASUREMENTS, MAY BE INNACURATE. 
@@ -36,11 +35,6 @@ def accelerate(self, current, target):
 def read_yaw(start_time_ms):
     elapsed_s = (time.ticks_ms() - start_time_ms) / 1000.0
     return imu.get_yaw() - YAW_BIAS * elapsed_s
-
-def set_motor_speed(base_speed, correction):
-    left = clamp(base_speed + correction, MIN_EFFORT, MAX_EFFORT)
-    right = clamp(base_speed - correction, MIN_EFFORT, MAX_EFFORT)
-    drivetrain.set_effort(left, right)
 
 # PI Controller
 class PIController:
@@ -73,7 +67,7 @@ def go(target_cm): ## 1ft ~ 30.5cm
     distList = []
 
     while True:
-        if (rangefinder.distance() > 20):
+        if (rangefinder.distance() > 40):
             print("driving normally")
             ticks = (drivetrain.get_left_encoder_position() +
              drivetrain.get_right_encoder_position()) / 2
@@ -95,7 +89,6 @@ def go(target_cm): ## 1ft ~ 30.5cm
                 velocity = (v1 + v2) / 2
             else:
                 velocity = 0
-            
     
             forward = driveController.update(target_cm, distance)
             forward = clamp(forward, -0.8, 0.8)
@@ -107,8 +100,8 @@ def go(target_cm): ## 1ft ~ 30.5cm
             current_yaw = imu.get_yaw()
             turn = headingController.update(target_heading, current_yaw)
             
-            max_turn = 0.4 * abs(forward)
-            turn = clamp(turn, -max_turn, max_turn)
+            #max_turn = 0.4 * abs(forward)
+            turn = clamp(turn, -0.2, 0.2)
     
             left = forward - turn
             right = forward + turn
@@ -118,12 +111,7 @@ def go(target_cm): ## 1ft ~ 30.5cm
     
             drivetrain.set_effort(left, right)
     
-            print("Dist:", round(distance, 2),
-                  "Err:", round(error, 2),
-                  "Vel:", round(velocity, 3))
-            print(drivetrain.get_left_encoder_position())
             time.sleep(dt)
-            
         else: 
             print("Diverting")
 
@@ -145,21 +133,27 @@ def go(target_cm): ## 1ft ~ 30.5cm
 
 def around() -> float:
     imu.reset_yaw()
+    
+    dist = 50
+    
     print("around")
     drivetrain.stop()
 
     turn(-45)
-    print("turned")
+    print("turned right 45")
 
-    simple_forward(16)
-    print("go'ed")
+    simple_forward(dist)
+    print("went 50 cm")
 
     turn(90)
-    simple_forward(16)
+    print("turned left 90")
+    simple_forward(dist)
+    print('went 50 cm')
 
-    turn(45)
+    turn(-45)
+    print("turned right 45")
 
-    return 8.5
+    return math.sqrt(dist**2 + dist**2)
 
 
 def simple_forward(distance_cm):
@@ -180,6 +174,7 @@ def simple_forward(distance_cm):
 
 
 def turn(target_deg):
+    #drivetrain.stop()
     imu.reset_yaw()
 
     kp = 0.025
@@ -189,8 +184,8 @@ def turn(target_deg):
     integral = 0.0
     prev_error = 0.0
 
-    MIN_TURN = 0.20   # your old deadzone (good value)
-    MAX_TURN = 0.4
+    MIN_TURN = 0.25   # your old deadzone (good value)
+    MAX_TURN = 0.3
     STOP_ANGLE = 2.5
 
     while True:
@@ -212,18 +207,20 @@ def turn(target_deg):
         # ✅ SMART minimum output (ONLY when close)
         if abs(output) < MIN_TURN and abs(error) > STOP_ANGLE:
             output = MIN_TURN if output > 0 else -MIN_TURN
-
+            
+            
         drivetrain.set_effort(-output, output)
 
         print("error:", round(error, 2), "output:", round(output, 3))
 
         # ✅ Better exit condition
-        if abs(error) < 2 and abs(derivative) < 2:
+        if abs(error) < STOP_ANGLE:
             break
 
         time.sleep(dt)
 
     drivetrain.stop()
+    imu.reset_yaw()
 
 
 def main():
