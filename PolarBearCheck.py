@@ -5,10 +5,10 @@ import math
 # Constants
 dt = 0.05
 MAX_EFFORT = 0.3 ## MAX IS 1.0
-MIN_EFFORT = -MAX_EFFORT ## INVERSE OF MAX, CHANGE FOR SPECIFIC CONTROL IN TURNING 
+MIN_EFFORT = -MAX_EFFORT ## INVERSE OF MAX, CHANGE FOR SPECIFIC CONTROL IN TURNING
 deadzone = 0.18 ## CHANGE ACCORDING TO WEIGHT!!! DEFAULT IS 0.18 FOR NAKED BOT
 
-YAW_BIAS = 0.00817 ## DERIVED FROM MEASUREMENTS, MAY BE INNACURATE. 
+YAW_BIAS = 0.00817 ## DERIVED FROM MEASUREMENTS, MAY BE INNACURATE.
 arounding = False  # (no longer used, left untouched)
 
 # Drive constants
@@ -16,7 +16,7 @@ WHEEL_CIRCUMFERENCE = 21.0
 TICKS_PER_REV = 24
 ##INACCURATE BUT SOMEWHAT TRANSLATES TO REAL DISTANCE
 
-# ── Logging ──────────────────────────────────────────────────────────────────
+# -- Logging ------------------------------------------------------------------
 LOG_FILE = "run_log.txt"
 
 def log_open():
@@ -31,7 +31,7 @@ def log(msg):
     with open(LOG_FILE, "a") as f:
         f.write(line)
 
-# ── Utilities ─────────────────────────────────────────────────────────────────
+# -- Utilities ----------------------------------------------------------------
 def clamp(val, min_val, max_val):
     return max(min(val, max_val), min_val)
 
@@ -87,23 +87,23 @@ def go(target_cm): ## 1ft ~ 30.5cm
              drivetrain.get_right_encoder_position()) / 2
             distance = (ticks / TICKS_PER_REV) * WHEEL_CIRCUMFERENCE
             error = target_cm - distance
-    
+
             errorList.append(error)
             distList.append(distance)
-    
+
             if len(errorList) > 5:
                 errorList.pop(0)
                 distList.pop(0)
-                
+
             avgError = sum(errorList) / len(errorList)
-            
+
             if len(distList) >= 3:
                 v1 = distList[-1] - distList[-2]
                 v2 = distList[-2] - distList[-3]
                 velocity = (v1 + v2) / 2
             else:
                 velocity = 0
-    
+
             forward = driveController.update(target_cm, distance)
             forward = clamp(forward, -0.8, 0.8)
             if abs(error) < 1.5 and abs(forward) < 0.05:
@@ -111,19 +111,19 @@ def go(target_cm): ## 1ft ~ 30.5cm
                 break
             if abs(forward) > 0 and abs(forward) < 0.2:
                 forward = 0.2 if forward > 0 else -0.2
-    
+
             current_yaw = imu.get_yaw()
             turn = headingController.update(target_heading, current_yaw)
             turn = clamp(turn, -0.2, 0.2)
-    
+
             left = forward - turn
             right = forward + turn
-    
+
             left = clamp(left, -1.0, 1.0)
             right = clamp(right, -1.0, 1.0)
-    
+
             drivetrain.set_effort(left, right)
-    
+
             time.sleep(dt)
         else:
             log("go: obstacle detected at {:.1f} cm, distance traveled={:.1f} cm".format(
@@ -152,10 +152,10 @@ def go(target_cm): ## 1ft ~ 30.5cm
 
 def around() -> float:
     """
-    Peeks left 45°. If clear, goes around left.
-    If blocked, turns 90° right (from the +45 peek position, net -45 from forward)
+    Peeks left 45deg. If clear, goes around left.
+    If blocked, turns 90deg right (from the +45 peek position, net -45 from forward)
     and goes around right. Either way the robot is already facing the correct
-    diagonal when avoidance begins — no extra turn needed.
+    diagonal when avoidance begins - no extra turn needed.
 
     Diamond path in both cases returns to the original line.
       Left:  (already at +45) forward, -90, forward, +45
@@ -210,7 +210,12 @@ def around() -> float:
     return avoided
 
 
-def simple_forward(distance_cm):
+def simple_forward(distance_cm, obstacle_threshold=40):
+    """
+    Drive forward distance_cm, holding heading via PI correction.
+    Aborts early if the rangefinder sees an obstacle within
+    obstacle_threshold cm, logging a warning so it shows up in the log.
+    """
     drivetrain.reset_encoder_position()
     imu.reset_yaw()
 
@@ -226,6 +231,12 @@ def simple_forward(distance_cm):
             log("simple_forward: done at {:.1f} cm".format(distance))
             break
 
+        range_cm = rangefinder.distance()
+        if range_cm <= obstacle_threshold:
+            log("simple_forward: OBSTACLE ABORT at {:.1f} cm traveled, rangefinder={:.1f} cm".format(
+                distance, range_cm))
+            break
+
         current_yaw = imu.get_yaw()
         turn_correction = headingController.update(0, current_yaw)
         turn_correction = clamp(turn_correction, -0.2, 0.2)
@@ -239,12 +250,18 @@ def simple_forward(distance_cm):
     drivetrain.stop()
 
 
-def turn(target_deg, smooth=False, timeout_s=3.0):
+def turn(target_deg, smooth=False, timeout_s=5.0):
     """
     PID turn to target_deg.
-    timeout_s: max seconds to attempt the turn before giving up.
-               Logs a warning and stops if exceeded.
+
+    Tuning notes (based on log analysis):
+      - MAX_TURN raised to 0.5 and MIN_TURN to 0.35 because every turn was
+        timing out at 3s while still 10-18deg short. The robot is simply too
+        slow at 0.3 max effort for 90deg turns within budget.
+      - timeout_s raised to 5.0 for the same reason.
+
     smooth: blends in forward creep during the final degrees of the turn.
+    timeout_s: max seconds before giving up and logging a warning.
     """
     imu.reset_yaw()
     start_ms = time.ticks_ms()
@@ -257,19 +274,19 @@ def turn(target_deg, smooth=False, timeout_s=3.0):
     integral = 0.0
     prev_error = 0.0
 
-    MIN_TURN = 0.25
-    MAX_TURN = 0.3
+    MIN_TURN = 0.35   # raised from 0.25 -- was too slow, caused timeouts
+    MAX_TURN = 0.5    # raised from 0.3  -- was too slow, caused timeouts
     STOP_ANGLE = 2.5
 
     BLEND_THRESHOLD = 20.0
     CREEP_SPEED = 0.15
 
     while True:
-        # ── Timeout check ────────────────────────────────────────────────────
+        # -- Timeout check ----------------------------------------------------
         elapsed_s = time.ticks_diff(time.ticks_ms(), start_ms) / 1000.0
         if elapsed_s >= timeout_s:
             current = imu.get_yaw()
-            log("turn: TIMEOUT after {:.2f} s — target={} deg, current={:.1f} deg, error={:.1f} deg".format(
+            log("turn: TIMEOUT after {:.2f} s - target={} deg, current={:.1f} deg, error={:.1f} deg".format(
                 elapsed_s, target_deg, current, normalize_angle(target_deg - current)
             ))
             break
@@ -309,7 +326,7 @@ def turn(target_deg, smooth=False, timeout_s=3.0):
             ))
 
         if abs(error) < STOP_ANGLE:
-            log("turn: complete — target={} deg, final yaw={:.1f} deg, time={:.2f} s".format(
+            log("turn: complete - target={} deg, final yaw={:.1f} deg, time={:.2f} s".format(
                 target_deg, current, elapsed_s
             ))
             break
