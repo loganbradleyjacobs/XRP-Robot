@@ -158,6 +158,9 @@ def around() -> float:
 
 def simple_forward(distance_cm):
     drivetrain.reset_encoder_position()
+    imu.reset_yaw()  # hold whatever heading we just turned to
+
+    headingController = PIController(kp=0.03, ki=0.01, dt=dt)
 
     while True:
         ticks = (drivetrain.get_left_encoder_position() +
@@ -167,7 +170,14 @@ def simple_forward(distance_cm):
         if distance >= distance_cm:
             break
 
-        drivetrain.set_effort(0.3, 0.3)
+        current_yaw = imu.get_yaw()
+        turn_correction = headingController.update(0, current_yaw)
+        turn_correction = clamp(turn_correction, -0.2, 0.2)
+
+        left = clamp(0.3 - turn_correction, -1.0, 1.0)
+        right = clamp(0.3 + turn_correction, -1.0, 1.0)
+
+        drivetrain.set_effort(left, right)
         time.sleep(dt)
 
     drivetrain.stop()
