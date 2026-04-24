@@ -1,0 +1,51 @@
+MicroPython v1.25.0-preview.beta06 on 2025-02-17; SparkFun XRP Controller (Beta) with RP2040
+Type "help()" for more information.
+>>> 
+[508615] main: starting
+[508626] go: target=152 cm
+[509222] go: obstacle detected at 37.7 cm, distance traveled=13.2 cm
+[509235] around: peeking left
+[509248] turn: target=45 deg, timeout=3.0 s
+[509795] turn: t=0.55 s  yaw=3.2  error=41.8  output=0.300
+[510279] turn: t=1.03 s  yaw=15.1  error=29.9  output=0.300
+[510768] turn: t=1.52 s  yaw=25.0  error=20.0  output=0.295
+[511251] turn: t=2.00 s  yaw=34.8  error=10.2  output=0.250
+[511788] turn: t=2.54 s  yaw=39.8  error=5.2  output=0.250
+[512295] turn: TIMEOUT after 3.05 s  target=45 deg, current=41.9 deg, error=3.1 deg
+[512470] around: left peek distance=91.8 cm
+[512531] around: left clear, going around left
+[512683] simple_forward: target=50 cm
+[519198] simple_forward: done at 50.3 cm
+[519285] around: leg 1 done
+[519341] turn: target=-90 deg, timeout=3.0 s
+[519888] turn: t=0.55 s  yaw=-6.7  error=-83.3  output=-0.300
+[520354] turn: t=1.01 s  yaw=-16.9  error=-73.1  output=-0.300
+[520858] turn: t=1.51 s  yaw=-29.7  error=-60.3  output=-0.300
+[521382] turn: t=2.04 s  yaw=-44.4  error=-45.6  output=-0.300
+[521858] turn: t=2.52 s  yaw=-57.3  error=-32.7  output=-0.300
+[522382] turn: TIMEOUT after 3.04 s  target=-90 deg, current=-71.2 deg, error=-18.8 deg
+[522468] around: turned right 90
+[522620] simple_forward: target=50 cm
+[529292] simple_forward: done at 50.2 cm
+[529359] around: leg 2 done
+[529416] turn: target=45 deg, timeout=3.0 s
+[529935] turn: t=0.52 s  yaw=5.3  error=39.7  output=0.300
+[530435] turn: t=1.02 s  yaw=14.9  error=30.1  output=0.300
+[530967] turn: t=1.55 s  yaw=24.8  error=20.2  output=0.300
+[531450] turn: t=2.03 s  yaw=31.4  error=13.6  output=0.296
+[531946] turn: t=2.53 s  yaw=33.9  error=11.1  output=0.260
+[532429] turn: TIMEOUT after 3.01 s  target=45 deg, current=34.3 deg, error=10.7 deg
+[532511] around: back to original heading (left path complete)
+[532572] around: complete, avoided=70.7 cm
+[532734] go: resuming, adjusted target=81.3 cm
+[534020] go: obstacle detected at 20.3 cm, distance traveled=35.7 cm
+[534092] around: peeking left
+[534171] turn: target=45 deg, timeout=3.0 s
+[534717] turn: t=0.54 s  yaw=5.9  error=39.1  output=0.300
+[535219] turn: t=1.05 s  yaw=8.2  error=36.8  output=0.300
+[535721] turn: t=1.55 s  yaw=16.1  error=28.9  output=0.300
+[536173] turn: t=2.00 s  yaw=23.1  error=21.9  output=0.300
+[536705] turn: t=2.53 s  yaw=30.0  error=15.0  output=0.250
+MicroPython v1.25.0-preview.beta06 on 2025-02-17; SparkFun XRP Controller (Beta) with RP2040
+Type "help()" for more information.
+>>> 
