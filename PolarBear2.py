@@ -153,7 +153,7 @@ def around() -> float:
     turn(-45)
     print("turned right 45")
 
-    return math.sqrt(dist**2 + dist**2)
+    return math.sqrt(2) * dist
 
 
 def simple_forward(distance_cm):
@@ -194,8 +194,8 @@ def turn(target_deg):
     integral = 0.0
     prev_error = 0.0
 
-    MIN_TURN = 0.25   # your old deadzone (good value)
-    MAX_TURN = 0.3
+    MIN_TURN = 0.35   # your old deadzone (good value)
+    MAX_TURN = 0.45
     STOP_ANGLE = 2.5
 
     while True:
