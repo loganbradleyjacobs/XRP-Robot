@@ -133,8 +133,8 @@ def go(target_cm): ## 1ft ~ 30.5cm
 
 def around() -> float:
     """
-    Peeks left 45°. If clear, goes around left.
-    If blocked, turns 90° right (from the +45 peek position, net -45 from forward)
+    Peeks left 45. If clear, goes around left.
+    If blocked, turns 90 right (from the +45 peek position, net -45 from forward)
     and goes around right. Either way the robot is already facing the correct
     diagonal when avoidance begins — no extra turn needed.
 
@@ -172,7 +172,7 @@ def around() -> float:
         print("turned left 45 - back to original heading")
 
     else:
-        # Left is blocked — turn 90° right from here to land at -45 from forward
+        # Left is blocked — turn 90 right from here to land at -45 from forward
         print("left blocked, turning right to check and go right")
         turn(-90)
         print("now facing -45 from original forward")
