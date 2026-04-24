@@ -1,51 +1,71 @@
-MicroPython v1.25.0-preview.beta06 on 2025-02-17; SparkFun XRP Controller (Beta) with RP2040
-Type "help()" for more information.
 >>> 
-[508615] main: starting
-[508626] go: target=152 cm
-[509222] go: obstacle detected at 37.7 cm, distance traveled=13.2 cm
-[509235] around: peeking left
-[509248] turn: target=45 deg, timeout=3.0 s
-[509795] turn: t=0.55 s  yaw=3.2  error=41.8  output=0.300
-[510279] turn: t=1.03 s  yaw=15.1  error=29.9  output=0.300
-[510768] turn: t=1.52 s  yaw=25.0  error=20.0  output=0.295
-[511251] turn: t=2.00 s  yaw=34.8  error=10.2  output=0.250
-[511788] turn: t=2.54 s  yaw=39.8  error=5.2  output=0.250
-[512295] turn: TIMEOUT after 3.05 s  target=45 deg, current=41.9 deg, error=3.1 deg
-[512470] around: left peek distance=91.8 cm
-[512531] around: left clear, going around left
-[512683] simple_forward: target=50 cm
-[519198] simple_forward: done at 50.3 cm
-[519285] around: leg 1 done
-[519341] turn: target=-90 deg, timeout=3.0 s
-[519888] turn: t=0.55 s  yaw=-6.7  error=-83.3  output=-0.300
-[520354] turn: t=1.01 s  yaw=-16.9  error=-73.1  output=-0.300
-[520858] turn: t=1.51 s  yaw=-29.7  error=-60.3  output=-0.300
-[521382] turn: t=2.04 s  yaw=-44.4  error=-45.6  output=-0.300
-[521858] turn: t=2.52 s  yaw=-57.3  error=-32.7  output=-0.300
-[522382] turn: TIMEOUT after 3.04 s  target=-90 deg, current=-71.2 deg, error=-18.8 deg
-[522468] around: turned right 90
-[522620] simple_forward: target=50 cm
-[529292] simple_forward: done at 50.2 cm
-[529359] around: leg 2 done
-[529416] turn: target=45 deg, timeout=3.0 s
-[529935] turn: t=0.52 s  yaw=5.3  error=39.7  output=0.300
-[530435] turn: t=1.02 s  yaw=14.9  error=30.1  output=0.300
-[530967] turn: t=1.55 s  yaw=24.8  error=20.2  output=0.300
-[531450] turn: t=2.03 s  yaw=31.4  error=13.6  output=0.296
-[531946] turn: t=2.53 s  yaw=33.9  error=11.1  output=0.260
-[532429] turn: TIMEOUT after 3.01 s  target=45 deg, current=34.3 deg, error=10.7 deg
-[532511] around: back to original heading (left path complete)
-[532572] around: complete, avoided=70.7 cm
-[532734] go: resuming, adjusted target=81.3 cm
-[534020] go: obstacle detected at 20.3 cm, distance traveled=35.7 cm
-[534092] around: peeking left
-[534171] turn: target=45 deg, timeout=3.0 s
-[534717] turn: t=0.54 s  yaw=5.9  error=39.1  output=0.300
-[535219] turn: t=1.05 s  yaw=8.2  error=36.8  output=0.300
-[535721] turn: t=1.55 s  yaw=16.1  error=28.9  output=0.300
-[536173] turn: t=2.00 s  yaw=23.1  error=21.9  output=0.300
-[536705] turn: t=2.53 s  yaw=30.0  error=15.0  output=0.250
+[70095] main: starting
+[70107] go: target=152 cm
+[70640] go: obstacle detected at 38.4 cm, distance traveled=11.3 cm
+[70653] around: peeking left
+[70668] turn: target=45 deg, timeout=5.0 s
+[70683] turn: t=0.01 s  yaw=-0.3  error=45.3  output=0.500
+[71201] turn: t=0.53 s  yaw=28.9  error=16.1  output=0.350
+[71712] turn: t=1.04 s  yaw=40.8  error=4.2  output=-0.350
+[72196] turn: t=1.53 s  yaw=42.6  error=2.4  output=-0.073
+[72210] turn: complete - target=45 deg, final yaw=42.6 deg, time=1.53 s
+[72403] around: left peek distance=65535.0 cm
+[72463] around: left clear, going around left
+[72604] simple_forward: target=50 cm
+[79576] simple_forward: done at 50.3 cm
+[79640] around: leg 1 done
+[79789] turn: target=-90 deg, timeout=5.0 s
+[80342] turn: t=0.53 s  yaw=-24.1  error=-65.9  output=-0.500
+[80815] turn: t=1.02 s  yaw=-48.0  error=-42.0  output=-0.500
+[81298] turn: t=1.51 s  yaw=-69.8  error=-20.2  output=0.350
+[81822] turn: t=2.03 s  yaw=-79.9  error=-10.1  output=0.350
+[82301] turn: t=2.51 s  yaw=-84.5  error=-5.5  output=-0.350
+[82798] turn: t=3.01 s  yaw=-86.2  error=-3.8  output=-0.350
+[82912] turn: complete - target=-90 deg, final yaw=-87.8 deg, time=3.12 s
+[82982] around: turned right 90
+[83125] simple_forward: target=50 cm
+[90133] simple_forward: done at 50.5 cm
+[90310] around: leg 2 done
+
+[90371] turn: target=45 deg, timeout=5.0 s[90916] turn: t=0.54 s  yaw=14.5  error=30.5  output=0.350
+[91404] turn: t=1.03 s  yaw=28.7  error=16.3  output=0.350
+[91905] turn: t=1.53 s  yaw=38.3  error=6.7  output=0.350
+[92381] turn: t=2.01 s  yaw=42.8  error=2.2  output=-0.051
+[92441] turn: complete - target=45 deg, final yaw=42.8 deg, time=2.01 s
+[92511] around: back to original heading (left path complete)
+[92608] around: complete, avoided=70.7 cm
+[92741] go: resuming, adjusted target=81.3 cm
+[93636] go: obstacle detected at 39.3 cm, distance traveled=24.4 cm
+[93795] around: peeking left
+[93888] turn: target=45 deg, timeout=5.0 s
+[94432] turn: t=0.54 s  yaw=15.6  error=29.4  output=0.350
+[94918] turn: t=1.03 s  yaw=30.1  error=14.9  output=0.350
+[95414] turn: t=1.53 s  yaw=36.9  error=8.1  output=0.350
+[95919] turn: t=2.03 s  yaw=41.9  error=3.1  output=-0.350
+[96409] turn: t=2.52 s  yaw=41.6  error=3.4  output=-0.350
+[96896] turn: t=3.01 s  yaw=42.1  error=2.9  output=-0.350
+[97343] turn: complete - target=45 deg, final yaw=43.4 deg, time=3.45 s
+[97519] around: left peek distance=29.5 cm
+[97592] around: left blocked, turning right 90 to face -45
+[97763] turn: target=-90 deg, timeout=5.0 s
+[98310] turn: t=0.55 s  yaw=-29.5  error=-60.5  output=-0.500
+[98812] turn: t=1.05 s  yaw=-54.1  error=-35.9  output=-0.500
+[99268] turn: t=1.50 s  yaw=-69.0  error=-21.0  output=-0.350
+[99813] turn: t=2.05 s  yaw=-81.4  error=-8.6  output=-0.350
+[100524] turn: complete - target=-90 deg, final yaw=-87.9 deg, time=2.76 s
+[100601] around: now facing -45 from original forward
+[100770] simple_forward: target=50 cm
+[107182] simple_forward: OBSTACLE ABORT at 42.4 cm traveled, rangefinder=39.8 cm
+[107263] around: leg 1 done
+[107338] turn: target=90 deg, timeout=5.0 s
+[107849] turn: t=0.51 s  yaw=9.5  error=80.5  output=0.500
+[108353] turn: t=1.01 s  yaw=45.1  error=44.9  output=0.484
+[108866] turn: t=1.53 s  yaw=69.5  error=20.5  output=0.350
+[109374] turn: t=2.04 s  yaw=81.9  error=8.1  output=-0.350
+[109869] turn: t=2.53 s  yaw=83.9  error=6.1  output=0.350
+[110318] turn: complete - target=90 deg, final yaw=87.9 deg, time=2.98 s
+[110401] around: turned left 90
+[110553] simple_forward: target=50 cm
 MicroPython v1.25.0-preview.beta06 on 2025-02-17; SparkFun XRP Controller (Beta) with RP2040
 Type "help()" for more information.
 >>> 
